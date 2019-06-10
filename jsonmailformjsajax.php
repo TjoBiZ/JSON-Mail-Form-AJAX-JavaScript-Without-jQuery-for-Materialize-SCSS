@@ -13,6 +13,19 @@ $c = true;
 	$project_name = $arrayfromjsonmail['name']. '. ('. $arrayfromjsonmail['formName'].').'; //Тема письма
 	$admin_email  = 'joker@tjo.biz'; //На какие ящики придет сообщение отправлено
 
+//$translateformnamecolumn = [
+//	formName => 'Название формы ',
+//	name => 'Имя ',
+//	tel => 'Телефон ',
+//	email => 'Почтовый адрес ',
+//	message => 'Сообщение ',
+//	browser => 'Используемая ОС и браузер ',
+//	language => 'Язык браузера и ОС ',
+//	time => 'Время у клиента в момент отправления формы и его часовой пояс ',
+//	ip => 'IP адрес ',
+//	pageform => 'Страница с которой отправлена форма '
+//];
+
 	foreach ( $arrayfromjsonmail as $key => $value ) {
 		if ( $value != "" && $key != "formName" ) {
 			$message .= "
