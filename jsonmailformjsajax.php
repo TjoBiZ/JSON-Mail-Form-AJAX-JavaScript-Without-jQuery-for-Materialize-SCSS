@@ -3,15 +3,53 @@
 header("Content-Type: application/json");
 // build a PHP variable from JSON sent using POST method
 $arrayfromjsonmail = json_decode(stripslashes(file_get_contents("php://input")), true);
+//Если без парамерта true декодируем json, то получаем объект, а не массив, тогда обращаемся к свойствам соответственным способом
+//To access the object in your PHP file, use
+//$v->name;
+//$v->email;
+//$v->subject;
+//$v->message;
 //echo json_encode($v);
 $arrayfromjsonmail["ip"] = $_SERVER['REMOTE_ADDR'];
 $arrayfromjsonmail['pageform'] = $_SERVER['HTTP_REFERER'];
+$project_name = $arrayfromjsonmail['name']. '. ('. $arrayfromjsonmail['formName'].').'; //Тема письма
+$admin_email  = 'joker@tjo.biz'; //На какие ящики придет сообщение отправлено
+
+/** Начало кода по SMS оповещению **/
+
+require_once 'sms.ru.php';
+
+$smsru = new SMSRU('B406B5AF-D7D7-6F91-D669-STRTSTTRSTS'); // Ваш уникальный программный ключ, который можно получить на главной странице
+
+$data = new stdClass();
+/* Если текст на номера один */
+$data->to = '66800323660,66800343991'; // Номера для отправки сообщения (От 1 до 100 шт за раз). Вторым указан городской номер, по которому будет возвращена ошибка
+$data->text = 'Коммерческая недвижимость ' . $arrayfromjsonmail['tel']; // Текст сообщения
+/* Если текст разный. В этом случае $data->to и $data->text обрабатываться не будут и их можно убрать из кода */
+//$data->multi = array( // От 1 до 100 штук за раз
+//	"79533606633" => "Hello World", // 1 номер
+//	"74993221627" => "Hello World 2", // 2 номер (указан городской номер, будет возвращена ошибка)
+//);
+$data->from = 'arcbu.ru'; // Если у вас уже одобрен буквенный отправитель, его можно указать здесь, в противном случае будет использоваться ваш отправитель по умолчанию
+// $data->time = time() + 7*60*60; // Отложить отправку на 7 часов
+// $data->translit = 1; // Перевести все русские символы в латиницу (позволяет сэкономить на длине СМС)
+$data->test = 1; // Позволяет выполнить запрос в тестовом режиме без реальной отправки сообщения
+// $data->partner_id = '258350'; // Можно указать ваш ID партнера, если вы интегрируете код в чужую систему
+$request = $smsru->send($data); // Отправка сообщений и возврат данных в переменную
+
+if ($request->status == "OK") { // Запрос выполнен успешно
+	foreach ($request->sms as $phone => $sms) { // Перебираем массив отправленных сообщений
+		if ($sms->status == "OK") {
+			$arrayfromjsonmail['smsru'] = "Сообщение на номер +$phone отправлено успешно. ID сообщения: $sms->sms_id. Ваш новый баланс: $request->balance";
+		} else {
+			$arrayfromjsonmail['smsru'] = "Сообщение на номер +$phone не отправлено. Код ошибки: $sms->status_code. Текст ошибки: $sms->status_text. ";
+		}
+	}
+}
+/** Сообщение на телефон тут код заканчивается**/
 
 //Script Foreach
 $c = true;
-
-	$project_name = $arrayfromjsonmail['name']. '. ('. $arrayfromjsonmail['formName'].').'; //Тема письма
-	$admin_email  = 'joker@tjo.biz'; //На какие ящики придет сообщение отправлено
 
 //guard for xss
 	function recurse_array_HTML_safe(&$arr) {
@@ -32,11 +70,12 @@ $c = true;
 			message => 'Сообщение',
 			browser => 'Используемая ОС и браузер',
 			language => 'Язык браузера и ОС',
+			firstvititedsite => 'Первое посещение сайта с этого браузера',
 			time => 'Время у клиента в момент отправления формы и его часовой пояс',
+			countpages => 'Сколько раз смотрел(а) страницу(ы)',
 			ip => 'IP адрес',
-			pageform => 'Страница с которой отправлена форма'
-//			countpage => 'Сколько раз были на странице ',
-//			time => 'Первое посещение сайта ',
+			pageform => 'Страница с которой отправлена форма',
+			smsru => 'Статус SMS оповещения мобильного через сервис sms.ru'
 //			yandexwebvisor => 'Ссылка на Яндекс Вебвизор '
 		];
 

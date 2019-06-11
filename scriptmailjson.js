@@ -1,3 +1,15 @@
+let cookieValueFirstVisit = document.cookie.replace(/(?:(?:^|.*;\s*)firstvisited\s*\=\s*([^;]*).*$)|^.*$/, "$1"); //Парсим есть ли данная запись в cookie - на первый визит сайта.
+//let cookieValueCountPages; // Объявляем переменную, чтобы зайти в область видимости
+    if(!cookieValueFirstVisit) { //Если нету, то создаем cookie со временем о первом визите и запускаем-создаем счетчик просмотренных страниц.
+        let timenow = new Date();
+        let firsttime ='firstvisited=' + timenow.toString();
+        document.cookie = firsttime + "; domain=." + document.domain + "; path=/; expires=Thu, 01 Jan 2030 00:00:00 UTC;";
+        document.cookie = "countpages=1 ; domain=." + document.domain + "; path=/; expires=Thu, 01 Jan 2030 00:00:00 UTC;";
+    } else { //Увеличиваем счетчик на единиц
+			  window.cookieValueCountPages = document.cookie.replace(/(?:(?:^|.*;\s*)countpages\s*\=\s*([^;]*).*$)|^.*$/, "$1");
+			  document.cookie = "countpages=" + ++window.cookieValueCountPages + "; domain=." + document.domain + "; path=/; expires=Thu, 01 Jan 2030 00:00:00 UTC;";
+    }
+
 const contactForm = document.getElementById("FormJSON");
 
 contactForm.addEventListener('submit', function(event) { //отлавливаем событие нажатие на кнопку у формы
@@ -27,7 +39,9 @@ contactForm.addEventListener('submit', function(event) { //отлавливае�
         message: document.querySelector('textarea[name="message"]').value,
         browser: navigator.userAgent,
         language: navigator.language,
-        time: current_datetime.toString()
+        firstvititedsite: cookieValueFirstVisit,
+        time: current_datetime.toString(),
+			  countpages: cookieValueCountPages
     };
 
     let data = JSON.stringify(formData); // Преобразуем данный массив в JSON Формат
