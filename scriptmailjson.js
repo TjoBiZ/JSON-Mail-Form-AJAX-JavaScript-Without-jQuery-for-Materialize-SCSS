@@ -10,67 +10,68 @@ let cookieValueFirstVisit = document.cookie.replace(/(?:(?:^|.*;\s*)firstvisited
 			  document.cookie = "countpages=" + ++window.cookieValueCountPages + "; domain=." + document.domain + "; path=/; expires=Thu, 01 Jan 2030 00:00:00 UTC;";
     }
 
-const contactForm = document.getElementById("FormJSON");
+let materializesforms = ["FormJSON", "AnotherFormJSON"];
 
-contactForm.addEventListener('submit', function(event) { //отлавливаем событие нажатие на кнопку у формы
-    event.preventDefault(); //отменяем все действия выполняемые по умолчанию браузером после этого события
+materializesforms.forEach(function(pagesforms, materializesforms) {
 
-    console.log('Действия пред отправкой JSON после нажатия'); // Тут можно задать действия сразу после нажатия кнопкп ПЕРЕД отправкаой JSON - "подождите сообщение отправляется."
 
-    let request = new XMLHttpRequest();
-    let url = "plugins/mail/jsonmailformjsajax.php";
-    request.open("POST", url, true);
-    request.setRequestHeader("Content-Type", "application/json");
-    request.onreadystatechange = function () {
-        if (request.readyState === 4 && request.status === 200) { // сценарий скриптов после ответа от сервера.
-            let jsonData = JSON.parse(request.response);
-            console.log(jsonData);
-            console.log(request.response);
-            contactForm.innerHTML = "<h3>Спасибо за заявку, " + jsonData['name'] + '!</h3><br> Ваше сообщение: <em style="color:#516eee">' + jsonData['message'] + '</em> отправлено. Ждите ответа, скоро с Вами свяжуться';
+    const contactForm = document.getElementById(pagesforms);
+
+    contactForm.addEventListener('submit', function(event) { //отлавливаем событие нажатие на кнопку у формы
+        event.preventDefault(); //отменяем все действия выполняемые по умолчанию браузером после этого события
+
+        console.log('Действия пред отправкой JSON после нажатия'); // Тут можно задать действия сразу после нажатия кнопкп ПЕРЕД отправкаой JSON - "подождите сообщение отправляется."
+
+        let request = new XMLHttpRequest();
+        let url = "plugins/mail/jsonmailformjsajax.php";
+        request.open("POST", url, true);
+        request.setRequestHeader("Content-Type", "application/json");
+        request.onreadystatechange = function () {
+            if (request.readyState === 4 && request.status === 200) { // сценарий скриптов после ответа от сервера.
+                let jsonData = JSON.parse(request.response);
+                console.log(jsonData);
+                console.log(request.response);
+                contactForm.innerHTML = "<h3>Спасибо за заявку, " + jsonData['name'] + '!</h3><br> Ваше сообщение: <em style="color:#516eee">' + jsonData['message'] + '</em> отправлено. Ждите ответа, скоро с Вами свяжуться';
+            }
+        };
+
+        let current_datetime = new Date(); // Время и часовой пояс на компьютере клиента
+
+        //заносим полученные данные из форм в переменные.
+        let varcheck; //Временная переменная с полученными значениями из форм.
+        let formName; ( varcheck = contactForm.querySelector('input[name="form_subject"]')) ? formName = varcheck.value : formName = false;
+        let name; ( varcheck = contactForm.querySelector('input[name="name"]')) ? name = varcheck.value : name = false;
+        let tel; ( varcheck = contactForm.querySelector('input[name="tel"]')) ? tel = varcheck.value : tel = false;
+        let email; ( varcheck = contactForm.querySelector('input[name="email"]')) ? email = varcheck.value : email = false;
+        let message; ( varcheck = contactForm.querySelector('textarea[name="message"]')) ? message = varcheck.value : message = false;
+        let datepicker; ( varcheck = contactForm.querySelector('input[name="datepicker"]')) ? datepicker = varcheck.value : datepicker = false;
+        let timepicker; ( varcheck = contactForm.querySelector('input[name="timepicker"]')) ? timepicker = varcheck.value : timepicker = false;
+        let multipleoptions; ( varcheck = contactForm.querySelector(".multipleoptions .select-wrapper input")) ? multipleoptions = varcheck.value : multipleoptions = false;
+        let radiochoice; if (contactForm.querySelector('input[type="radio"]')) {let groupnameradio = contactForm.querySelector('input[type="radio"]').name;
+        let rates = document.getElementsByName(groupnameradio); // Только в document дереве, в переменной не работает уникализируем в html через атрибут name, который группирует объекты radio!
+            for(var i = 0; i < rates.length; i++){
+                if(rates[i].checked){
+                    radiochoice = rates[i].id;
+                }
+            }
+        } else {
+            radiochoice = false;
         }
-    };
+        let shopcheck; ( varcheck = contactForm.querySelector('input[name="shop"]')) ? shopcheck = varcheck.checked: shopcheck = false;
+        if (shopcheck) { shopcheck = "yes" }
+        let officecheck; (varcheck = contactForm.querySelector('input[name="office"]')) ? officecheck = varcheck.checked: officecheck = false;
+        if (officecheck) { officecheck = "yes" }
+        let partnercheck; ( varcheck = contactForm.querySelector('input[name="partner"]')) ? partnercheck = varcheck.checked: partnercheck = false;
+        if (partnercheck) { partnercheck = "yes" }
 
-    let current_datetime = new Date(); // Время и часовой пояс на компьютере клиента
+        // Создаем ассоциативный массив - объект с полученными даннынми из переменных - форм
+        let formData = { formName, name, tel, email, message, datepicker, timepicker, multipleoptions, radiochoice, shopcheck, officecheck, partnercheck, browser: navigator.userAgent, language: navigator.language, firstvititedsite: cookieValueFirstVisit, time: current_datetime.toString(), countpages: cookieValueCountPages };
 
-    //заносим значения булиан и других форм в переменные
-    let shopcheck = contactForm.querySelector('input[name="shop"]').checked;
-    if (shopcheck) { shopcheck = "yes" }
-    let officecheck = contactForm.querySelector('input[name="office"]').checked;
-    if (officecheck) { officecheck = "yes" }
-    let partnercheck = contactForm.querySelector('input[name="partner"]').checked;
-    if (partnercheck) { partnercheck = "yes" }
-    let rates = document.getElementsByName('group1'); // Только в document дереве, в переменной не работает!
-    let radiochoice;
-    for(var i = 0; i < rates.length; i++){
-        if(rates[i].checked){
-            radiochoice = rates[i].id;
-        }
-    }
-    let multipleoptions = contactForm.querySelector(".multipleoptions .select-wrapper input").value;
+        let data = JSON.stringify(formData); // Преобразуем данный массив в JSON Формат
 
-    // Создаем ассоциативный массив - объект с полученными данынми из форм
-    let formData = {
-        formName: contactForm.querySelector('input[name="form_subject"]').value,
-        name: contactForm.querySelector('input[name="name"]').value,
-        tel: contactForm.querySelector('input[name="tel"]').value,
-        email: contactForm.querySelector('input[name="email"]').value,
-        message: contactForm.querySelector('textarea[name="message"]').value,
-        datepicker: contactForm.querySelector('input[name="datepicker"]').value,
-        timepicker: contactForm.querySelector('input[name="timepicker"]').value,
-        multipleoptions,
-			  radiochoice,
-        shopcheck,
-        officecheck,
-        partnercheck,
-        browser: navigator.userAgent,
-        language: navigator.language,
-        firstvititedsite: cookieValueFirstVisit,
-        time: current_datetime.toString(),
-        countpages: cookieValueCountPages
-    };
+        request.send(data);
 
-    let data = JSON.stringify(formData); // Преобразуем данный массив в JSON Формат
+    });
 
-    request.send(data);
 
 });
